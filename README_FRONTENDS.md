@@ -66,27 +66,35 @@ curl -X POST http://localhost:5000/api/v1/predict-batch \
 ### 3. **HTML Web Frontend** (Lightweight, no Streamlit needed)
 **Best for:** Lightweight deployment, running locally
 
-```bash
-# Start API server (in one terminal)
-python api.py
+⚠️ **IMPORTANT:** This frontend requires the Flask API to be running!
 
-# Then open index.html in browser
+```bash
+# Terminal 1: Start the API server
+python api.py
+# → API starts on http://localhost:5000
+
+# Terminal 2: Open index.html in browser
 # Option A: Open directly
 open index.html  # macOS
 xdg-open index.html  # Linux
 start index.html  # Windows
 
-# Option B: Use Python HTTP server
+# Option B: Use Python HTTP server (keep API running in Terminal 1)
 python -m http.server 8000
-# Visit: http://localhost:8000/index.html
+# → Visit: http://localhost:8000/index.html
 ```
+
+**If you see:** `✗ Cannot connect to API. Make sure "python api.py" is running.`
+- Make sure you've run `python api.py` in a separate terminal
+- Check that port 5000 is not blocked
+- Wait a few seconds for API to fully start
 
 ✨ Features:
 - Professional, responsive design
 - Single & batch analysis tabs
 - Real-time charts and statistics
 - Mobile-friendly
-- **No Streamlit dependency**
+- **Requires Flask API backend** (not Streamlit)
 
 ---
 
@@ -296,6 +304,14 @@ FINANCIAL SENTIMENT ANALYSIS
 
 ## 🆘 Troubleshooting
 
+### "Cannot connect to API" error on HTML frontend
+```
+❌ Error: "✗ Cannot connect to API. Make sure "python api.py" is running."
+✅ Solution: Start Flask API in a separate terminal
+   Terminal 1: python api.py
+   Terminal 2: open index.html (or use http.server)
+```
+
 ### Model not found
 ```
 ❌ Error: "Model checkpoint not found"
@@ -313,9 +329,17 @@ FINANCIAL SENTIMENT ANALYSIS
 ### Port already in use
 ```
 ❌ Error: "Address already in use"
-✅ Solution: Kill existing process
-   lsof -i :5000  # Find it
-   kill -9 <PID>  # Kill it
+✅ Solution: Kill existing process on port 5000
+   lsof -i :5000     # Find process
+   kill -9 <PID>     # Kill it
+```
+
+### API won't start
+```
+❌ Error: "Failed to load classifier"
+✅ Solution: Make sure model checkpoint exists
+   ls -la models_checkpoint/best_model.pt
+   # If not found, run: python main.py
 ```
 
 ---

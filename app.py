@@ -1,5 +1,12 @@
 """Streamlit web app for Financial Sentiment Analysis."""
 
+import warnings
+
+# Suppress transformers library deprecation warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*__path__.*")
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import streamlit as st
 import plotly.graph_objects as go
 from inference import FinancialSentimentClassifier

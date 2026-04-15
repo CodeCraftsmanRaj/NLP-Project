@@ -1,5 +1,12 @@
 """Inference module for predictions on new text."""
 
+import warnings
+
+# Suppress transformers library deprecation warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*__path__.*")
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 import torch
 from pathlib import Path
 import json

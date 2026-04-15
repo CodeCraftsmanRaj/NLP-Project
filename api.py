@@ -1,5 +1,12 @@
 """Flask REST API for Financial Sentiment Analysis."""
 
+import warnings
+
+# Suppress transformers library deprecation warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*__path__.*")
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging

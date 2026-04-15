@@ -1,5 +1,12 @@
 """Main training and evaluation pipeline."""
 
+import warnings
+
+# Suppress transformers library deprecation warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", message=".*__path__.*")
+warnings.filterwarnings("ignore", category=FutureWarning)
+
 from pathlib import Path
 import sys
 
