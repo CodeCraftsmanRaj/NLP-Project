@@ -11,7 +11,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Generated XLex and intermediate artifacts
-xlex.json
+# xlex.json
 
 # Model checkpoints (except results)
 models_checkpoint/*

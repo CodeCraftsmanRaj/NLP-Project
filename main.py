@@ -1,1 +1,96 @@
-\"\"\"Main training and evaluation pipeline.\"\"\"\n\nimport torch\nfrom torch.utils.data import DataLoader\nfrom pathlib import Path\nimport sys\n\nfrom config import DEVICE, BATCH_SIZE, XLEX_PATH\nfrom data.load_data import load_phrasebank\nfrom data.dataset import FinancialDataset\nfrom xlex.xlex import XLex\nfrom models.model import EnhancedFinSentiBERT\nfrom training.train import train, save_checkpoint\nfrom training.evaluate import evaluate\nfrom utils.plots import plot_loss, plot_cm, plot_metrics, ensure_results_dir\nfrom utils.metrics import print_metrics_summary, save_metrics_json\n\ndef main():\n    \"\"\"Main execution function.\"\"\"\n    \n    print(\"\\n\" + \"=\"*60)\n    print(\"Financial Sentiment Analysis Pipeline\")\n    print(\"=\"*60 + \"\\n\")\n    \n    # Step 1: Load data\n    print(\"[1/5] Loading dataset...\")\n    try:\n        texts, labels = load_phrasebank()\n        print(f\"  \u2713 Loaded {len(texts)} samples\\n\")\n    except FileNotFoundError as e:\n        print(f\"  \u2717 Error: {e}\")\n        sys.exit(1)\n    \n    # Step 2: Load XLex\n    print(\"[2/5] Loading XLex...\")\n    if not Path(XLEX_PATH).exists():\n        print(f\"  \u2717 XLex not found at {XLEX_PATH}\")\n        print(f\"  Run 'python xlex/build_xlex.py' first.\")\n        sys.exit(1)\n    \n    xlex = XLex(XLEX_PATH)\n    print(f\"  \u2713 XLex loaded ({XLEX_PATH})\\n\")\n    \n    # Step 3: Prepare data\n    print(\"[3/5] Preparing data loaders...\")\n    dataset = FinancialDataset(texts, labels, xlex)\n    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)\n    print(f\"  \u2713 DataLoader created (batch_size={BATCH_SIZE})\\n\")\n    \n    # Step 4: Train model\n    print(\"[4/5] Training model...\")\n    model = EnhancedFinSentiBERT().to(DEVICE)\n    print(f\"  \u2713 Model initialized (device={DEVICE})\")\n    \n    losses, model = train(model, loader, DEVICE, verbose=True)\n    print(f\"  \u2713 Training complete\\n\")\n    \n    # Step 5: Evaluate model\n    print(\"[5/5] Evaluating model...\")\n    metrics, preds, y_true = evaluate(model, loader, DEVICE, verbose=True)\n    print(f\"  \u2713 Evaluation complete\\n\")\n    \n    # Save results\n    print(\"\\nSaving results...\")\n    ensure_results_dir()\n    \n    plot_loss(losses, save_path=\"results/loss_curve.png\", show=False)\n    plot_cm(y_true, preds, labels=[\"Positive\", \"Negative\", \"Neutral\"], \n           save_path=\"results/confusion_matrix.png\", show=False)\n    plot_metrics(metrics, save_path=\"results/metrics.png\", show=False)\n    save_metrics_json(metrics, save_path=\"results/metrics.json\")\n    \n    print_metrics_summary(metrics, \"Model\")\n    \n    # Save model checkpoint\n    save_checkpoint(model, None, 0, losses[-1], \n                   save_path=\"models_checkpoint/best_model.pt\")\n    \n    print(\"\\n\" + \"=\"*60)\n    print(\"Training pipeline completed successfully!\")\n    print(\"Results saved to: results/\")\n    print(\"=\"*60 + \"\\n\")\n\nif __name__ == \"__main__\":\n    main()
+"""Main training and evaluation pipeline."""
+
+from pathlib import Path
+import sys
+
+from torch.utils.data import DataLoader
+
+from config import BATCH_SIZE, DEVICE, XLEX_PATH
+from data.dataset import FinancialDataset
+from data.load_data import load_phrasebank
+from models.model import EnhancedFinSentiBERT
+from training.evaluate import evaluate
+from training.train import save_checkpoint, train
+from utils.metrics import print_metrics_summary, save_metrics_json
+from utils.plots import ensure_results_dir, plot_cm, plot_loss, plot_metrics
+from xlex.xlex import XLex
+
+
+def main() -> None:
+	"""Main execution function."""
+	print("\n" + "=" * 60)
+	print("Financial Sentiment Analysis Pipeline")
+	print("=" * 60 + "\n")
+
+	# Step 1: Load data
+	print("[1/5] Loading dataset...")
+	try:
+		texts, labels = load_phrasebank()
+		print(f"  ✓ Loaded {len(texts)} samples\n")
+	except FileNotFoundError as e:
+		print(f"  ✗ Error: {e}")
+		sys.exit(1)
+
+	# Step 2: Load XLex
+	print("[2/5] Loading XLex...")
+	if not Path(XLEX_PATH).exists():
+		print(f"  ✗ XLex not found at {XLEX_PATH}")
+		print("  Run 'python xlex/build_xlex.py' first.")
+		sys.exit(1)
+
+	xlex = XLex(XLEX_PATH)
+	print(f"  ✓ XLex loaded ({XLEX_PATH})\n")
+
+	# Step 3: Prepare data
+	print("[3/5] Preparing data loaders...")
+	dataset = FinancialDataset(texts, labels, xlex)
+	loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+	print(f"  ✓ DataLoader created (batch_size={BATCH_SIZE})\n")
+
+	# Step 4: Train model
+	print("[4/5] Training model...")
+	model = EnhancedFinSentiBERT().to(DEVICE)
+	print(f"  ✓ Model initialized (device={DEVICE})")
+
+	losses, model = train(model, loader, DEVICE, verbose=True)
+	print("  ✓ Training complete\n")
+
+	# Step 5: Evaluate model
+	print("[5/5] Evaluating model...")
+	metrics, preds, y_true = evaluate(model, loader, DEVICE, verbose=True)
+	print("  ✓ Evaluation complete\n")
+
+	# Save results
+	print("\nSaving results...")
+	ensure_results_dir()
+
+	plot_loss(losses, save_path="results/loss_curve.png", show=False)
+	plot_cm(
+		y_true,
+		preds,
+		labels=["Positive", "Negative", "Neutral"],
+		save_path="results/confusion_matrix.png",
+		show=False,
+	)
+	plot_metrics(metrics, save_path="results/metrics.png", show=False)
+	save_metrics_json(metrics, save_path="results/metrics.json")
+
+	print_metrics_summary(metrics, "Model")
+
+	# Save model checkpoint
+	save_checkpoint(
+		model,
+		None,
+		0,
+		losses[-1],
+		save_path="models_checkpoint/best_model.pt",
+	)
+
+	print("\n" + "=" * 60)
+	print("Training pipeline completed successfully!")
+	print("Results saved to: results/")
+	print("=" * 60 + "\n")
+
+
+if __name__ == "__main__":
+	main()
