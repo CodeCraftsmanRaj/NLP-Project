@@ -68,12 +68,16 @@ def save_checkpoint(model, optimizer, epoch, loss, save_path="models_checkpoint/
         save_path: Path to save checkpoint
     """
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-    torch.save({
+    checkpoint = {
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
-        'optimizer_state_dict': optimizer.state_dict(),
         'loss': loss,
-    }, save_path)
+    }
+
+    if optimizer is not None:
+        checkpoint['optimizer_state_dict'] = optimizer.state_dict()
+
+    torch.save(checkpoint, save_path)
     print(f"✓ Checkpoint saved: {save_path}")
 
 def load_checkpoint(model, optimizer, checkpoint_path):
